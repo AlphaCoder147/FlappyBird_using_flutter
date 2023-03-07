@@ -17,9 +17,11 @@ class _HomePageState extends State<HomePage> {
   double time = 0;
   double height = 0;
   double gravity = -4.9;
-  double velocity = 3.5;
-  double birdWidth = 0.1;
-  double birdHeight = 0.1;
+  double velocity = 2.2;
+  double birdWidth = 0.2;
+  double birdHeight = 0.2;
+  int score = 0;
+  int i = 0;
 
   bool gameHasStarted = false;
 
@@ -36,7 +38,7 @@ class _HomePageState extends State<HomePage> {
 
   void startGame() {
     gameHasStarted = true;
-    Timer.periodic(Duration(milliseconds: 10), (timer) {
+    Timer.periodic(Duration(milliseconds: 80), (timer) {
       height = gravity * time * time + velocity * time;
       setState(() {
         birdY = initialPos - height;
@@ -46,8 +48,21 @@ class _HomePageState extends State<HomePage> {
         gameHasStarted = false;
         _showDialog();
       }
+      moveMap();
       time += 0.1;
     });
+  }
+
+  void moveMap() {
+    for (i = 0; i < barrierX.length; i++) {
+      setState(() {
+        barrierX[i] -= 0.05;
+      });
+      if (barrierX[i] < -1.5) {
+        barrierX[i] += 3;
+        score++;
+      }
+    }
   }
 
   void resetGame() {
@@ -57,6 +72,8 @@ class _HomePageState extends State<HomePage> {
       gameHasStarted = false;
       time = 0;
       initialPos = birdY;
+      score = 0;
+      barrierX = [2, 2 + 1.5];
     });
   }
 
@@ -68,10 +85,11 @@ class _HomePageState extends State<HomePage> {
           return AlertDialog(
             backgroundColor: Colors.brown,
             title: Center(
-                child: Text(
-              "GAME OVER",
-              style: myNewFontWhite.copyWith(fontSize: 20),
-            )),
+              child: Text(
+                "GAME OVER : $score",
+                style: myNewFontWhite.copyWith(fontSize: 20),
+              ),
+            ),
             actions: [
               GestureDetector(
                 onTap: resetGame,
@@ -101,6 +119,14 @@ class _HomePageState extends State<HomePage> {
     if (birdY < -1 || birdY > 1) {
       return true;
     }
+    for (int i = 0; i < barrierX.length; i++) {
+      if (barrierX[i] <= barrierWidth &&
+          barrierX[i] + barrierWidth >= -birdWidth &&
+          (birdY <= -1 + barrierHeight[i][0] ||
+              birdY + birdHeight >= 1 - barrierHeight[i][1])) {
+        return true;
+      }
+    }
     return false;
   }
 
@@ -115,22 +141,75 @@ class _HomePageState extends State<HomePage> {
               flex: 3,
               child: Container(
                 color: Colors.lightBlueAccent,
-                child: Stack(
-                  children: [
-                    MyBird(birdWidth: birdWidth, birdHeight: birdHeight),
-                    Container(
+                child: Center(
+                  child: Stack(
+                    children: [
+                      MyBird(
+                        birdY: birdY,
+                        birdWidth: birdWidth,
+                        birdHeight: birdHeight,
+                      ),
+                      Container(
+                        alignment: Alignment(0, 0.5),
                         child: Text(
-                      gameHasStarted ? " " : "TAP TO PLAY",
-                      style: myNewFontWhite.copyWith(fontSize: 35),
-                    ))
+                          gameHasStarted ? " " : "TAP TO PLAY",
+                          style: myNewFontWhite.copyWith(fontSize: 20),
+                        ),
+                      ),
+                      MyBarrier(
+                        barrierX: barrierX[0],
+                        barrierWidth: barrierWidth,
+                        barrierHeight: barrierHeight[0][0],
+                        isTheBottomBarrier: false,
+                      ),
+                      MyBarrier(
+                        barrierX: barrierX[0],
+                        barrierWidth: barrierWidth,
+                        barrierHeight: barrierHeight[0][1],
+                        isTheBottomBarrier: true,
+                      ),
+                      MyBarrier(
+                        barrierX: barrierX[1],
+                        barrierWidth: barrierWidth,
+                        barrierHeight: barrierHeight[1][0],
+                        isTheBottomBarrier: false,
+                      ),
+                      MyBarrier(
+                        barrierX: barrierX[1],
+                        barrierWidth: barrierWidth,
+                        barrierHeight: barrierHeight[1][1],
+                        isTheBottomBarrier: true,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Container(height: 10, color: Colors.lightGreenAccent),
+            Expanded(
+              child: Container(
+                color: Colors.brown,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(score.toString(),
+                            style: myNewFontWhite.copyWith(fontSize: 30)),
+                        SizedBox(
+                          height: 12,
+                        ),
+                        Text(
+                          "SCORE",
+                          style: myNewFontWhite.copyWith(fontSize: 20),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
             ),
-            Expanded(
-                child: Container(
-              color: Colors.brown,
-            )),
           ],
         ),
       ),
